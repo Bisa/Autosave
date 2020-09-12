@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SubnauticaAutosave
+namespace Autosave
 {
 	[Serializable]
 	public class Config

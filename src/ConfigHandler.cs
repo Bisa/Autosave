@@ -1,10 +1,9 @@
 ﻿using Oculus.Newtonsoft.Json;
 using System;
 using System.IO;
-using UnityEngine;
 using static QModManager.Utility.Logger;
 
-namespace SubnauticaAutosave
+namespace Autosave
 {
 	/* Json serialization from:
 	 * https://docs.unity3d.com/Manual/JSONSerialization.html

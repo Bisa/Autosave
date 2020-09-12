@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using LitJson;
-using UnityEngine;
 
-namespace SubnauticaAutosave
+namespace Autosave
 {
 	internal static class Translation
 	{

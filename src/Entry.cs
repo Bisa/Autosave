@@ -5,7 +5,7 @@ using System.IO;
 using System.Reflection;
 using static QModManager.Utility.Logger;
 
-namespace SubnauticaAutosave
+namespace Autosave
 {
 	[QModCore]
 	public static class Entry
@@ -81,8 +81,13 @@ namespace SubnauticaAutosave
 		{
 			ConfigHandler.LoadConfig();
 
-			HarmonyPatches.InitializeHarmony();
-			LogDebug("Initialized Harmony");
+			if(!AutosavePatches.Initialize())
+			{
+				LogFatal("Unable to initialize Harmony!");
+				DisplayMessage("Could not start, see log for details!", Level.Fatal); // TODO: Translate
+			}
+			
+			AutosavePatches.PatchAll();
 		}
 	}
 }

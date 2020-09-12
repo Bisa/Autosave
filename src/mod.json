@@ -1,0 +1,9 @@
+{
+  "Id": "TOKEN_ID",
+  "DisplayName": "TOKEN_NAME",
+  "Author": "TOKEN_AUTHOR",
+  "Version": "TOKEN_VERSION",
+  "Enable": true,
+  "Game": "TOKEN_GAME",
+  "AssemblyName": "TOKEN_ASSEMBLY"
+}

@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Autosave</RootNamespace>
+    <AssemblyName>Autosave</AssemblyName>
+    <Description>$(AssemblyName), a Subnautica Mod</Description>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SubnauticaPath Condition=" '$(SubnauticaPath)' == '' ">C:\Program Files (x86)\Steam\steamapps\common\Subnautica</SubnauticaPath>
+    <SubnauticaQModsPath Condition=" '$(SubnauticaQModsPath)' == '' ">$(SubnauticaPath)\QMods</SubnauticaQModsPath>
+    <BuildPath>..\build</BuildPath>
+    <OutputPath>$(BuildPath)\QMods\$(AssemblyName)</OutputPath>
+    
+    <Dependencies>$(SubnauticaPath)\Subnautica_Data\Managed</Dependencies>
+    <BepInExPath>$(SubnauticaPath)\BepInEx</BepInExPath>
+    <AssemblyCSharpFpPath>$(Dependencies)\Assembly-CSharp-firstpass.dll</AssemblyCSharpFpPath>
+    <AssemblyCSharpPath>$(Dependencies)\Assembly-CSharp.dll</AssemblyCSharpPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <LangVersion>7.1</LangVersion>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExPath)\core\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(AssemblyCSharpFpPath)</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(AssemblyCSharpPath)</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="LitJson">
+      <HintPath>$(Dependencies)\LitJson.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(Dependencies)\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="QModInstaller">
+      <HintPath>$(BepInExPath)\plugins\QModManager\QModInstaller.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine">
+      <HintPath>$(Dependencies)\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(Dependencies)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Languages\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\LICENSE">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  
+  <Target Name="BeforeBuild">
+    <!-- unless overridden with -p:Tag we rely on git to get our version -->
+    <Exec Condition=" '$(Tag)' == '' " ConsoleToMSBuild="true"
+      Command="git describe --tags --abbrev=0"
+      LogStandardErrorAsError="True"
+      ContinueOnError="False"
+      WorkingDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="Tag" />
+    </Exec>
+    <!-- unless overridden with -p:InfoVersion we rely on git to get our informational version -->
+    <Exec Condition=" '$(InfoVersion)' == '' " ConsoleToMSBuild="true"
+      Command="git describe --long --tags --dirty=-dirty"
+      LogStandardErrorAsError="True"
+      ContinueOnError="False"
+      WorkingDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="InfoVersion" />
+    </Exec>
+    <!-- append the configuration name to InfoVersion -->
+    <PropertyGroup>
+      <InfoVersion>$(InfoVersion)-$(Configuration)</InfoVersion>
+    </PropertyGroup>
+    <!-- generate the AssemblyInfo.cs before building, to ensure we know what the resulting .dll came from -->
+    <ItemGroup>
+      <AssemblyAttributes Include="AssemblyDescription">
+        <_Parameter1>$(Description)</_Parameter1>
+      </AssemblyAttributes>
+      <AssemblyAttributes Include="AssemblyProduct">
+        <_Parameter1>$(AssemblyName)</_Parameter1>
+      </AssemblyAttributes>
+      <AssemblyAttributes Include="AssemblyVersion">
+        <_Parameter1>$(Tag)</_Parameter1>
+      </AssemblyAttributes>
+      <AssemblyAttributes Include="AssemblyFileVersion">
+        <_Parameter1>$(Tag)</_Parameter1>
+      </AssemblyAttributes>
+      <AssemblyAttributes Include="AssemblyInformationalVersion">
+        <_Parameter1>$(InfoVersion)</_Parameter1>
+      </AssemblyAttributes>
+      <AssemblyAttributes Include="AssemblyCopyright">
+        <_Parameter1>Released under MIT, see LICENSE file distributed with assembly.</_Parameter1>
+      </AssemblyAttributes>
+    </ItemGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteCodeFragment Language="C#"
+      OutputFile="$(IntermediateOutputPath)AssemblyInfo.cs"
+      AssemblyAttributes="@(AssemblyAttributes)" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)AssemblyInfo.cs" />
+    </ItemGroup>
+    <!-- keep mod.json updated -->
+    <PropertyGroup>
+      <ModJson>mod.json</ModJson>
+      <NewModJson>$(BuildPath)\QMods\$(AssemblyName)\mod.json</NewModJson>
+    </PropertyGroup>
+    <Copy SourceFiles="$(ModJson)"
+          DestinationFiles="$(NewModJson)"/>
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_ID"
+      Replacement="$(AssemblyName)" />
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_NAME"
+      Replacement="$(AssemblyName)" />
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_AUTHOR"
+      Replacement="$(Author)" />
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_VERSION"
+      Replacement="$(Tag)" />
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_GAME"
+      Replacement="Subnautica" />
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_ASSEMBLY"
+      Replacement="$(AssemblyName).dll" />
+  </Target>
+  
+  <Target Name="AfterBuild">
+    <!-- After a build, copy the result into our debug path (we want to test the build right?) -->
+    <RemoveDir Directories="$(SubnauticaQModsPath)\$(AssemblyName)" />
+    <ItemGroup>
+       <BuildFiles Include="$(BuildPath)\QMods\**\*.*"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildFiles)"
+          DestinationFiles="@(BuildFiles->'$(SubnauticaQModsPath)\%(RecursiveDir)%(Filename)%(Extension)')"/>
+    <!-- ... and zip the QMods dir for distribution -->
+    <PropertyGroup>
+      <ZipResult>$(BuildPath)\$(AssemblyName)-$(InfoVersion).zip</ZipResult>
+    </PropertyGroup>
+    <Delete Files="$(ZipResult)" />
+    <ZipDir
+      ZipFileName="$(ZipResult)"
+      DirectoryName="$(BuildPath)\QMods"
+    />
+	</Target>
+  
+  <UsingTask TaskName="ZipDir" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+  <ParameterGroup>
+    <ZipFileName ParameterType="System.String" Required="true" />
+    <DirectoryName ParameterType="System.String" Required="true" />
+  </ParameterGroup>
+  <Task>
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Using Namespace="System.IO.Compression" />
+    <Code Type="Fragment" Language="cs">
+      <![CDATA[
+        try
+        {
+          Log.LogMessage(string.Format("Zipping Directory {0} to {1}", DirectoryName, ZipFileName));
+          ZipFile.CreateFromDirectory(DirectoryName, ZipFileName, CompressionLevel.Fastest, true);
+          return true;
+        }
+
+        catch(Exception ex)
+        {
+          Log.LogErrorFromException(ex);
+          return false;
+        }
+      ]]>
+    </Code>
+  </Task>
+  </UsingTask>
+
+  <UsingTask TaskName="TokenReplace" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Path ParameterType="System.String" Required="true" />
+      <Token ParameterType="System.String" Required="true" />
+      <Replacement ParameterType="System.String" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+          string content = File.ReadAllText(Path);
+          content = content.Replace(Token, Replacement);
+          File.WriteAllText(Path, content);
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+</Project>

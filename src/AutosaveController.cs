@@ -8,7 +8,7 @@ using UnityEngine;
 using UWE;
 using static QModManager.Utility.Logger;
 
-namespace SubnauticaAutosave
+namespace Autosave
 {
 	/* Some of the following code is based on "Safe Autosave" by berkay2578:
 	 * https://www.nexusmods.com/subnautica/mods/94
@@ -48,13 +48,17 @@ namespace SubnauticaAutosave
 			PlatformServices platformServices = PlatformUtils.main.GetServices();
 			if (platformServices is PlatformServicesEpic)
 			{
-				savePath = Path.Combine(Application.persistentDataPath, "Subnautica/SavedGames");
+				savePath = Path.Combine(
+					Application.persistentDataPath,
+					"Subnautica",
+					"SavedGames");
 			}
 			else if (platformServices is PlatformServicesSteam)
 			{
 				savePath = Path.Combine(
 					new DirectoryInfo(Application.dataPath).Parent.FullName,
-					"SNAppData/SavedGames");
+					"SNAppData",
+					"SavedGames");
 			}
 			return savePath;
 		}
