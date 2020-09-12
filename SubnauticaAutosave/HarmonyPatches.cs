@@ -21,9 +21,7 @@ namespace SubnauticaAutosave
 
 		private static void Patch_Subroot_PlayerEnteredOrExited_Postfix()
 		{
-#if DEBUG
-			Entry.LogMessage("Player entered or exited sub. Delaying autosave.");
-#endif
+			Entry.LogDebug("Player entered or exited sub. Delaying autosave.");
 
 			Player.main.GetComponent<AutosaveController>()?.DelayAutosave();
 		}

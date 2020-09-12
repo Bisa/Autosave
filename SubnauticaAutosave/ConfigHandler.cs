@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using static QModManager.Utility.Logger;
 
 namespace SubnauticaAutosave
 {
@@ -20,21 +21,21 @@ namespace SubnauticaAutosave
 #if (!DEBUG)
 			if (cfg.SecondsBetweenAutosaves < 120)
 			{
-				Entry.LogMessage("Please allow at least two minutes between saves. Config invalidated.");
+				Entry.LogWarning("Please allow at least two minutes between saves. Config invalidated.");
 
 				return false;
 			}
 
 			if (cfg.MaxSaveFiles < 1)
 			{
-				Entry.LogMessage("Please allow at least one autosave file slot. Config invalidated.");
+				Entry.LogWarning("Please allow at least one autosave file slot. Config invalidated.");
 
 				return false;
 			}
 
 			if (cfg.HardcoreMode.GetType() != typeof(bool))
 			{
-				Entry.LogMessage("Please use only true or false for HardcoreMode.");
+				Entry.LogWarning("Please use only true or false for HardcoreMode. Config invalidated.");
 
 				return false;
 			}
@@ -58,7 +59,7 @@ namespace SubnauticaAutosave
 
 				else
 				{
-					Entry.LogMessage("Failed to validate config values. Using defaults.");
+					Entry.DisplayMessage("Failed to validate your config, reverting to defaults, see log for details!", Level.Warn); // TODO: Translate
 
 					Entry.GetConfig = new Config();
 				}
@@ -71,8 +72,11 @@ namespace SubnauticaAutosave
 
 			catch (Exception ex)
 			{
-				Entry.LogMessage(ex.ToString());
-				Entry.LogMessage("Caught exception while executing LoadConfig");
+				Entry.LogError("Caught exception while executing LoadConfig", ex);
+				Entry.DisplayMessage("Encountered an exception, see log for details!", Level.Error); // TODO: Translate
+				
+				// TODO: Handle the exception?
+				// 		 (Methods down the line might expect the config object to be initialized)
 			}
 		}
 	}

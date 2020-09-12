@@ -46,8 +46,7 @@ namespace SubnauticaAutosave
 
 				catch (Exception ex)
 				{
-					Entry.LogMessage(ex.ToString());
-					Entry.LogMessage("Failed while loading language json.");
+					Entry.LogError("Failed while loading language json.", ex);
 
 					return;
 				}
@@ -86,7 +85,7 @@ namespace SubnauticaAutosave
 				return translated;
 			}
 
-			Entry.LogMessage($"Could not find translated string for `{source}`");
+			Entry.LogError($"Could not find translated string for `{source}`");
 
 			return source;
 		}
@@ -104,8 +103,7 @@ namespace SubnauticaAutosave
 
 				catch (Exception ex)
 				{
-					Entry.LogMessage(ex.ToString());
-					Entry.LogMessage($"Failed to format '{source}' with arg0 `{arg0}'");
+					Entry.LogError($"Failed to format '{source}' with arg0 `{arg0}'", ex);
 				}
 			}
 

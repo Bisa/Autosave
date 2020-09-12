@@ -1,7 +1,9 @@
 ﻿using QModManager.API.ModLoading;
+using QModManager.Utility;
+using System;
 using System.IO;
 using System.Reflection;
-using UnityEngine;
+using static QModManager.Utility.Logger;
 
 namespace SubnauticaAutosave
 {
@@ -20,9 +22,58 @@ namespace SubnauticaAutosave
 			}
 		}
 
-		internal static void LogMessage(string message)
+		internal static void LogFatal(string message, Exception exception = null)
 		{
-			Debug.Log("[snAutosave] :: " + message);
+			LogMessage(message, Level.Fatal, exception);
+		}
+
+		internal static void LogError(string message, Exception exception = null)
+		{
+			LogMessage(message, Level.Error, exception);
+		}
+
+		internal static void LogWarning(string message, Exception exception = null)
+		{
+			LogMessage(message, Level.Warn, exception);
+		}
+
+		internal static void LogInfo(string message)
+		{
+			LogMessage(message, Level.Info);
+		}
+
+		internal static void LogDebug(string message, bool showOnScreen = false)
+		{
+			LogMessage(message, Level.Debug, null, showOnScreen);
+		}
+
+		internal static void DisplayMessage(string message, Level level = Level.Info)
+		{
+			LogInfo("Displaying message in-game:");
+			Logger.Log(
+				Level.Info,
+				string.Format(
+					"[Autosave{0}] {1}",
+					(level == Level.Info) ? string.Empty : ":" + level.ToString(),
+					message),
+				null,
+				true);
+		}
+
+		private static void LogMessage(string message, Level level = Level.Info, System.Exception exception = null, bool showOnScreen = false)
+		{
+			// Start by logging to file
+			Logger.Log(
+				level,
+				message,
+				exception,
+				false);
+
+			// ... and display on screen if we are debugging
+			if(showOnScreen && Logger.DebugLogsEnabled)
+			{
+				DisplayMessage(message, level);
+			}
 		}
 
 		[QModPatch]
@@ -31,10 +82,7 @@ namespace SubnauticaAutosave
 			ConfigHandler.LoadConfig();
 
 			HarmonyPatches.InitializeHarmony();
-
-#if DEBUG
-			LogMessage("Initialized Harmony");
-#endif
+			LogDebug("Initialized Harmony");
 		}
 	}
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UWE;
+using static QModManager.Utility.Logger;
 
 namespace SubnauticaAutosave
 {
@@ -113,18 +114,14 @@ namespace SubnauticaAutosave
 		{
 			if (IntroVignette.isIntroActive || LaunchRocket.isLaunching)
 			{
-#if DEBUG
-				Entry.LogMessage($"Did not save, isIntroActive == {IntroVignette.isIntroActive} / isLaunching == {LaunchRocket.isLaunching}");
-#endif
+				Entry.LogDebug($"Did not save, isIntroActive == {IntroVignette.isIntroActive} / isLaunching == {LaunchRocket.isLaunching}");
 
 				return false;
 			}
 
 			if (PlayerCinematicController.cinematicModeCount > 0 && Time.time - PlayerCinematicController.cinematicActivityStart <= 30f)
 			{
-#if DEBUG
-				Entry.LogMessage("Did not save because cinematics are active");
-#endif
+				Entry.LogDebug("Did not save because cinematics are active");
 
 				return false;
 			}
@@ -133,11 +130,8 @@ namespace SubnauticaAutosave
 
 			if (safeHealthFraction > 0f && !this.IsSafePlayerHealth(safeHealthFraction))
 			{
-#if DEBUG
 				LiveMixin playerLiveMixin = Player.main.liveMixin;
-
-				Entry.LogMessage($"Did not save because player health was {playerLiveMixin.health} / {playerLiveMixin.maxHealth}");
-#endif
+				Entry.LogDebug($"Did not save because player health was {playerLiveMixin.health} / {playerLiveMixin.maxHealth}");
 
 				return false;
 			}
@@ -177,17 +171,18 @@ namespace SubnauticaAutosave
 			IngameMenu.main.Close();
 #endif
 
-			ErrorMessage.AddWarning("AutosaveStarting".Translate());
+			Entry.DisplayMessage("AutosaveStarting".Translate());
 			string cachedSaveSlot = string.Empty;
 
 			if(!hardcoreMode)
 			{
 				if(!Directory.Exists(GetSavePath()))
 				{
-					Entry.LogMessage(string.Format(
-						"Fatal! Unable to find save directory, the expected '{0}' does not exist.",
+					Entry.LogFatal(string.Format(
+						"Unable to find save directory, the expected '{0}' does not exist.",
 						cachedSaveSlot));
-					ErrorMessage.AddError("FATAL SubnauticaAutosave could not find your SavedGames, see log for details!");
+					Entry.DisplayMessage("Could not find your SavedGames directory, see log for details!", // TODO: Translate
+						Level.Fatal);
 
 					this.isSaving = false;
 					throw new FileNotFoundException(savePath);
@@ -197,9 +192,7 @@ namespace SubnauticaAutosave
 			}
 
 
-#if DEBUG
-			Entry.LogMessage($"Cached save slot == {cachedSaveSlot}");
-#endif
+			Entry.LogDebug($"Cached save slot == {cachedSaveSlot}", true);
 
 			yield return null;
 
@@ -210,9 +203,7 @@ namespace SubnauticaAutosave
 				SaveLoadManager.main.SetCurrentSlot(autosaveSlot);
 			}
 
-#if DEBUG
-			Entry.LogMessage($"Set custom slot as {autosaveSlot}");
-#endif
+			Entry.LogDebug($"Set custom slot as {autosaveSlot}", true);
 
 			yield return null;
 
@@ -220,17 +211,13 @@ namespace SubnauticaAutosave
 
 			yield return saveGameAsync;
 
-#if DEBUG
-			Entry.LogMessage("Executed _SaveGameAsync");
-#endif
+			Entry.LogDebug("Executed _SaveGameAsync");
 
 			if (!hardcoreMode)
 			{
 				this.CopyScreenshotFiles(cachedSaveSlot, autosaveSlot);
 
-#if DEBUG
-				Entry.LogMessage($"Copied screenshots from {cachedSaveSlot} to {autosaveSlot}");
-#endif
+				Entry.LogDebug($"Copied screenshots from {cachedSaveSlot} to {autosaveSlot}", true);
 
 				SaveLoadManager.main.SetCurrentSlot(cachedSaveSlot);
 				this.lastUsedAutosaveName = autosaveSlot;
@@ -239,18 +226,14 @@ namespace SubnauticaAutosave
 			int autosaveInterval = Entry.GetConfig.SecondsBetweenAutosaves;
 			this.nextSaveTriggerTick += autosaveInterval;
 
-#if DEBUG
-			Entry.LogMessage("Updated save slot and trigger tick");
-#endif
+			Entry.LogDebug("Updated save slot and trigger tick");
 
 			yield return null;
 
-			ErrorMessage.AddWarning("AutosaveEnding".FormatTranslate(autosaveInterval.ToString()));
-			this.isSaving = false;
+			Entry.LogDebug("Autosave sequence complete");
+			Entry.DisplayMessage("AutosaveEnding".FormatTranslate(autosaveInterval.ToString()));
 
-#if DEBUG
-			Entry.LogMessage("Autosave sequence complete");
-#endif
+			this.isSaving = false;
 
 			yield break;
 		}
@@ -259,20 +242,15 @@ namespace SubnauticaAutosave
 		{
 			this.totalTicks++;
 
-#if DEBUG
 			if (this.totalTicks % 30 == 0)
 			{
-				Entry.LogMessage($"totalTicks reached {this.totalTicks} ticks");
+				Entry.LogDebug($"totalTicks reached {this.totalTicks} ticks");
 			}
-#endif
 
 			if (this.totalTicks == this.nextSaveTriggerTick - PriorWarningTicks)
 			{
-#if DEBUG
-				Entry.LogMessage("Warning ticks reached, should display an ErrorMessage.");
-#endif
-
-				ErrorMessage.AddWarning("AutosaveWarning".FormatTranslate(PriorWarningTicks.ToString()));
+				Entry.LogDebug("Warning ticks reached, should display an ErrorMessage.");
+				Entry.DisplayMessage("AutosaveWarning".FormatTranslate(PriorWarningTicks.ToString()));
 			}
 
 			else if (this.totalTicks >= this.nextSaveTriggerTick && !this.isSaving)
@@ -284,9 +262,7 @@ namespace SubnauticaAutosave
 
 				else
 				{
-#if DEBUG
-					Entry.LogMessage("IsSafeToSave false. Delaying autosave.");
-#endif
+					Entry.LogDebug("IsSafeToSave false. Delaying autosave.");
 
 					this.DelayAutosave();
 				}
@@ -298,7 +274,7 @@ namespace SubnauticaAutosave
 		{
 			if (Entry.GetConfig == null)
 			{
-				Entry.LogMessage("Main config missing. Trying to load config.");
+				Entry.LogWarning("Main config missing. Trying to load config.");
 
 				ConfigHandler.LoadConfig();
 			}
@@ -312,13 +288,12 @@ namespace SubnauticaAutosave
 
 			this.lastUsedAutosaveName = !Entry.GetConfig.HardcoreMode ? this.LastUsedAutosaveFromStorage() : string.Empty;
 
-#if DEBUG
-			Entry.LogMessage($"SecondsBetweenAutosaves == {Entry.GetConfig.SecondsBetweenAutosaves}");
-			Entry.LogMessage($"MaxSaveFiles == {Entry.GetConfig.MaxSaveFiles}");
-			Entry.LogMessage($"SafePlayerHealthFraction == {Entry.GetConfig.MinimumPlayerHealthPercent}");
-			Entry.LogMessage($"lastUsedAutosaveName == {this.lastUsedAutosaveName}");
-			Entry.LogMessage($"HardcoreMode == {Entry.GetConfig.HardcoreMode}");
-#endif
+			Entry.LogDebug($"SecondsBetweenAutosaves == {Entry.GetConfig.SecondsBetweenAutosaves}");
+			Entry.LogDebug($"MaxSaveFiles == {Entry.GetConfig.MaxSaveFiles}");
+			Entry.LogDebug($"SafePlayerHealthFraction == {Entry.GetConfig.MinimumPlayerHealthPercent}");
+			Entry.LogDebug($"lastUsedAutosaveName == {this.lastUsedAutosaveName}");
+			Entry.LogDebug($"HardcoreMode == {Entry.GetConfig.HardcoreMode}");
+
 		}
 
 		// Monobehaviour.Start
@@ -343,14 +318,16 @@ namespace SubnauticaAutosave
 
 				catch (Exception ex)
 				{
-					Entry.LogMessage(ex.ToString());
-					Entry.LogMessage("Failed to execute save coroutine. Something went wrong.");
+					Entry.LogError("Failed to execute save coroutine. Something went wrong.", ex);
+					Entry.DisplayMessage("Failed to execute save coroutine, see log for details!", Level.Error); // TODO: Translate
+
+					// TODO: Handle the exception?
 				}
 			}
 
 			else
 			{
-				ErrorMessage.AddWarning("AutosaveInProgress".Translate());
+				Entry.DisplayMessage("AutosaveInProgress".Translate());
 			}
 		}
 	}
