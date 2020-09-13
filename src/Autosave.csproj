@@ -111,6 +111,11 @@
       WorkingDirectory="$(MSBuildProjectDirectory)">
       <Output TaskParameter="ConsoleOutput" PropertyName="Tag" />
     </Exec>
+    <!-- clean potential suffixes from the provided tag to accomodate AssemblyVersion -->
+    <CleanTag TagString="$(Tag)">
+      <Output PropertyName="Tag" TaskParameter="CleanTagResult" />
+    </CleanTag>
+    <Message Text="Using tag: $(Tag)" Importance="High" />
     <!-- unless overridden with -p:InfoVersion we rely on git to get our informational version -->
     <Exec Condition=" '$(InfoVersion)' == '' " ConsoleToMSBuild="true"
       Command="git describe --long --tags --dirty=-dirty"
@@ -242,6 +247,28 @@
           string content = File.ReadAllText(Path);
           content = content.Replace(Token, Replacement);
           File.WriteAllText(Path, content);
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <UsingTask TaskName="CleanTag" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <TagString ParameterType="System.String" Required="true" />
+      <CleanTagResult ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+          int start = TagString.IndexOf("-");
+          if(start == -1){
+            CleanTagResult = TagString;
+            return true;
+          } else {
+            CleanTagResult = TagString.Substring(0, start);
+            return true;
+          }
+          return false;
         ]]>
       </Code>
     </Task>
