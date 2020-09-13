@@ -1,31 +1,43 @@
-## **A Subnautica Autosaving Mod**
+# Autosave
 
-#### **Description:**
-An automated save system which saves in time intervals. The autosave slots are separate from the normal save by default, but can be configured otherwise.
-You can define several custom parameters in the settings file (see the Configuration section).
+This is the missing autosave feature for Subnautica.
 
-#### **Installation:**
+This mod will:
+- Automatically save your game every N seconds
+- Keep at most X of these autosaves for you to return to whenever you want
+
+Never loose more than N * X seconds worth of gameplay due to bugs, glitches or mistakes again!
+
+## Installation
 1) Make sure [QMods](https://www.nexusmods.com/subnautica/mods/201) (v4.x) is installed.
-2) Download the zip file from the [Files tab](https://www.nexusmods.com/subnautica/mods/<unknown>/?tab=files) in nexus or [Releases](https://github.com/Bisa/Autosave/releases) on github.
+2) Download the latest zip file from the [Files tab](https://www.nexusmods.com/subnautica/mods/561/?tab=files) at Nexus or [Releases](https://github.com/Bisa/Autosave/releases) from github.
 3) Unzip the contents of the zip to the game's main directory (where Subnautica.exe can be found)
 
-#### **(Optional) Configuration:**
+### Configuration
 1) Navigate to the mod's directory (*Subnautica\QMods\Autosave*).
-2) Edit settings.json with your favourite text editor.
-3) Define custom values according to your preference. The settings available are -
-   *  "SecondsBetweenAutosaves": 900 -- The time (in seconds) between autosave attempts. Must be at least 120.
-   *  "MaxSaveFiles": 3  -- The maximum amount of autosave slots. Must be at least 1.
-   *  "MinimumPlayerHealthPercent": 25 -- If player health is below this percent, no save will occur. Change to 0 to disable this option.
-   *  "HardcoreMode": false -- If true, autosaves will override the normal save slot instead of using separate slots.
+2) Edit *settings.json* with your favourite text editor.
+   
+   **"SecondsBetweenAutosaves": 900** - The time (in seconds) between autosave attempts. Must be at least 120.
+   
+   **"MaxSaveFiles": 3** - The maximum amount of autosave slots. Must be at least 1.
+   
+   **"MinimumPlayerHealthPercent": 25** - If player health is below this percent, no save will occur. Change to 0 to disable this option.
+   
+   **"HardcoreMode": false** - If true, autosaves will override the normal save slot instead of using separate slots.
 
-#### **(Optional) Translation:**
+## Contributing
+
+Feel free to clone [Bisa/Autosave](https://github.com/Bisa/Autosave) from github and submit a pull-request with your contributions.
+
+Kindly add a MIT license statement to either the file you are contributing with or, in the case of many files - a license file with details on which parts of the "software" you contributed with.
+
+### Translation
 If you want to contribute a translation for this mod, please follow these steps:
-1) Cop the *src\Languages\English.json*
+1) Copy the *src\Languages\English.json*
 2) Change the name to your language. It needs to match the file name in *Subnautica\Subnautica_Data\StreamingAssets\SNUnmanagedData\LanguageFiles*
 3) Translate the file. Do not touch the keys ("AutosaveStarting"), only the translated values ("Autosave sequence...")
-4) Fork the github repo and add a pull request with your new translation.
 
-#### **(Optional) Building:**
+## Building
 If you want to build from source you may use the following variables:
 * **SubnauticaPath** - 
 The path to your Subnautica install directory where msbuild can find its dependencies, this will default to "```C:\Program Files (x86)\Steam\steamapps\common\Subnautica```".
@@ -39,18 +51,22 @@ Example build command:
 
 ```msbuild -p:Platform=AnyCPU -p:Configuration=Release -p:SubnauticaPath="D:\Games\Steam\steamapps\common\Subnautica" -t:Clean,Build```
 
-#### **FAQ:**
-* **Q. Is this mod safe to add or remove from an existing save file?**
-* A. Yes, the mod is using Subnauticas original ```SaveGameAsync()``` method and copies the resulting *slot{0000}* directory, it will not touch your original.
-* **Q. Does this mod have any known conflicts?**
-* A. No, but you should probably not use this mod with [Safe Autosave](https://www.nexusmods.com/subnautica/mods/94) due to redundancy.
-* **Q. Does this mod impact performance?**
-* A. It should not during normal circumstances, since using the original Subnautica ```SaveGameAsync()``` methos gameplay will "freeze" for a few seconds when saving and then continue normally - just as if you pressed the save button yourself.
+## FAQ
 
-#### **Credits:**
-- Forked from [DingoDjango's snAutosave](https://github.com/DingoDjango/snAutosave)
-- Powered by [Harmony](https://github.com/pardeike/Harmony)
-- Powered by [QMods](https://www.nexusmods.com/subnautica/mods/201)
+### **Q. Is this mod safe to add or remove from an existing save file?**
+**A.** Yes, the mod is using Subnauticas original ```SaveGameAsync()``` method and copies the resulting *slot{0000}* directory, it will not touch your original.
 
-#### **Source/Changelog:**
-[github](https://github.com/Bisa/Autosave)
+### **Q. Does this mod have any known conflicts?**
+**A.** No, but while you can install [Subnautica Autosave](https://www.nexusmods.com/subnautica/mods/237), [Safe Autosave](https://www.nexusmods.com/subnautica/mods/94) and this mod - you probably should not due to redundancy.
+
+### **Q. Does this mod impact performance?**
+**A.** It should not during normal circumstances, since using the original Subnautica ```SaveGameAsync()``` method gameplay will "freeze" for a few seconds when saving and then continue normally - just as if you pressed the save button yourself.
+
+## Credits
+- Forked from [DingoDjango/snAutosave](https://github.com/DingoDjango/snAutosave) ([Nexus](https://www.nexusmods.com/subnautica/mods/237))
+- Powered by
+  - [QMods](https://www.nexusmods.com/subnautica/mods/201)
+  - [Harmony](https://github.com/pardeike/Harmony)
+
+## **Source/Changelog**
+[Bisa/Autosave](https://github.com/Bisa/Autosave) on github
