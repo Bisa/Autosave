@@ -32,6 +32,13 @@ namespace Autosave
 				return false;
 			}
 
+			if (cfg.MaxSaveFiles > 9999)
+			{
+				Entry.LogWarning("I can not handle more than 9999 autosave files. Config invalidated.");
+
+				return false;
+			}
+
 			if (cfg.HardcoreMode.GetType() != typeof(bool))
 			{
 				Entry.LogWarning("Please use only true or false for HardcoreMode. Config invalidated.");

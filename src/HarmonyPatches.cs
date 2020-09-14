@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using HarmonyLib;
 
 namespace Autosave
@@ -7,7 +8,7 @@ namespace Autosave
 	{
 		private static Harmony harmony = null;
 #if DEBUG
-		private static bool TestPatch_SaveGame_Prefix()
+		private static bool TestPatch_GiveFeedback_Prefix()
 		{
 			Player.main.GetComponent<AutosaveController>()?.ExecuteAutosave();
 
@@ -32,6 +33,11 @@ namespace Autosave
 			Translation.ReloadLanguage();
 		}
 
+		private static bool Patch_SaveGame_Prefix()
+        {
+            return Player.main.GetComponent<AutosaveController>().ChangeSlotIfOnAutosaveSlot();
+        }
+
 		public static bool Initialize()
         {
             if ((harmony = new Harmony("com.github.bisa.autosave")) == null)
@@ -46,15 +52,20 @@ namespace Autosave
 		{
 			Entry.LogDebug("Applying all patches...");
 #if DEBUG
-			Entry.LogDebug("Patching Menu Save to perform autosave for debugging", true);
+			Entry.LogDebug("Patching Menu Feedback to perform autosave for debugging", true);
 			harmony.Patch( 
-				original: typeof(IngameMenu).GetMethod("SaveGame"),
+				original: typeof(IngameMenu).GetMethod("GiveFeedback"),
 				prefix: new HarmonyMethod(typeof(AutosavePatches),
-							nameof(AutosavePatches.TestPatch_SaveGame_Prefix)));
+							nameof(AutosavePatches.TestPatch_GiveFeedback_Prefix)));
 #endif
 
 			HarmonyMethod delayAutosave = new HarmonyMethod(typeof(AutosavePatches),
 				nameof(AutosavePatches.Patch_Subroot_PlayerEnteredOrExited_Postfix));
+
+			harmony.Patch(
+				original: typeof(IngameMenu).GetMethod("SaveGame"),
+				prefix: new HarmonyMethod(typeof(AutosavePatches),
+							nameof(AutosavePatches.Patch_SaveGame_Prefix)));
 
 			// Autosave injection
 			harmony.Patch(
@@ -79,5 +90,5 @@ namespace Autosave
 
 			Entry.LogDebug("Done with patching!");
 		}
-	}
+    }
 }

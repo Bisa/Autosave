@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UWE;
+using System.Text.RegularExpressions;
+
 using static QModManager.Utility.Logger;
 
 namespace Autosave
@@ -25,11 +27,9 @@ namespace Autosave
 
 		private const int PriorWarningTicks = 30;
 
-		private const string AutosaveNameFormat = "autosave_slot{0:0000}";
+		private const string autoSaveIdFormat  = "{0:0000}";
 
-		private readonly List<string> allowedAutosaveNames = new List<string>();
-
-		private string lastUsedAutosaveName;
+		private const string autoSaveIdSearchPattern  = "-????";
 
 		private bool isSaving = false;
 
@@ -37,73 +37,100 @@ namespace Autosave
 
 		private int nextSaveTriggerTick = 120;
 
-		private string SlotNameFormatted(int slotNumber)
-		{
-			// Example output: "autosave_slot0003"
-			return string.Format(AutosaveNameFormat, slotNumber);
-		}
+		private static Regex autosaveSlotRegex = new Regex(@"^slot\d{4}-\d{4}$", RegexOptions.Compiled);
+		
+		private static Regex saveSlotRegex = new Regex(@"^slot\d{4}$", RegexOptions.Compiled);
 
-		private string GetSavePath()
+		internal static string GetSavePath()
 		{
 			PlatformServices platformServices = PlatformUtils.main.GetServices();
+			DirectoryInfo SavedGames = null;	
+
 			if (platformServices is PlatformServicesEpic)
 			{
-				savePath = Path.Combine(
+				SavedGames = new DirectoryInfo(Path.Combine(
 					Application.persistentDataPath,
 					"Subnautica",
-					"SavedGames");
+					"SavedGames"));
 			}
 			else if (platformServices is PlatformServicesSteam)
 			{
-				savePath = Path.Combine(
+				SavedGames = new DirectoryInfo(Path.Combine(
 					new DirectoryInfo(Application.dataPath).Parent.FullName,
 					"SNAppData",
-					"SavedGames");
+					"SavedGames"));
 			}
-			return savePath;
-		}
-
-		private string LastUsedAutosaveFromStorage()
-		{
-			string savedGamesDir = GetSavePath();
-
-			if (Directory.Exists(savedGamesDir))
+			
+			if(SavedGames.Exists)
 			{
-				DirectoryInfo[] saveDirectories = new DirectoryInfo(savedGamesDir).GetDirectories("*slot*", SearchOption.TopDirectoryOnly);
-
-				if (saveDirectories.Count() > 0)
-				{
-					IOrderedEnumerable<DirectoryInfo> saveSlotsByLastModified = saveDirectories.OrderByDescending(d => d.GetFiles("gameinfo.json")[0].LastWriteTime);
-
-					foreach (DirectoryInfo save in saveSlotsByLastModified)
-					{
-						if (this.allowedAutosaveNames.Contains(save.Name))
-						{
-							// The most recent save slot used, which matches the maximum save slots setting
-							return save.Name;
-						}
-					}
-				}
+				return SavedGames.FullName;
 			}
 
 			return string.Empty;
 		}
 
-		private string NextAutosaveSlotName()
+		private List<AutosaveSlot> GetAutosaveSlotsOldestFirst(string slot)
 		{
-			if (!string.IsNullOrEmpty(this.lastUsedAutosaveName))
+			List<AutosaveSlot> slots = new List<AutosaveSlot>();
+			
+			string saveGamesPath = GetSavePath();
+			string slotSaveGamesPath = Path.Combine(
+				saveGamesPath,
+				slot);
+
+			if (new DirectoryInfo(slotSaveGamesPath).Exists)
 			{
-				for (int i = 0; i < this.allowedAutosaveNames.Count - 1; i++)
+				// find all autosaves for the slot
+				DirectoryInfo[] slotDirectories = new DirectoryInfo(saveGamesPath).GetDirectories(
+					slot + autoSaveIdSearchPattern,
+					SearchOption.TopDirectoryOnly);
+				
+				if (slotDirectories.Count<DirectoryInfo>() > 0)
 				{
-					// Returns slot 0 if the latest autosave was the maximum slot allowed (due to .Count -1)
-					if (this.allowedAutosaveNames[i] == this.lastUsedAutosaveName)
+					// collect ids used for all autosaves to this slot
+					foreach (DirectoryInfo dir in
+						slotDirectories.OrderByDescending(d => d.GetFiles("gameinfo.json")[0].LastWriteTime))
+						//slotDirectories.OrderByDescending(d => d.Name))
 					{
-						return this.allowedAutosaveNames[i + 1];
+						string autoSaveIdStr = dir.Name.SubstringFromOccuranceOf(AutosaveSlot.Delimiter, 0);
+						int autoSaveId = -1;
+
+						if(int.TryParse(autoSaveIdStr, out autoSaveId))
+						{
+							slots.Add(new AutosaveSlot(slot, dir, autoSaveId));
+						}
+
+						else
+						{
+							Entry.LogWarning(string.Format(
+								"Unable to parse autosave id from '{0}', ignoring directory",
+								dir.Name));
+						}
 					}
 				}
 			}
 
-			return this.SlotNameFormatted(0);
+			slots.Reverse();
+			return slots;
+		}
+
+		private AutosaveSlot GetNextAutosaveSlot(string slot)
+		{
+			List<AutosaveSlot> slots = GetAutosaveSlotsOldestFirst(slot);
+			
+			if(slots.Count == 0)
+			{
+				Entry.LogDebug(string.Format(
+						"Found no slots for {0}, starting at {1}.",
+						slot,
+						string.Format(AutosaveSlot.Format,  0)),
+					true);
+
+				return new AutosaveSlot(slot, 0);
+			}
+
+			// up the last id by one
+			return new AutosaveSlot(slot, slots.Last().GetId() + 1);
 		}
 
 		private bool IsSafePlayerHealth(float minHealthPercent)
@@ -143,32 +170,199 @@ namespace Autosave
 			return !SaveLoadManager.main.isSaving;
 		}
 
-		private void CopyScreenshotFiles(string originalSlot, string targetSlot)
+		private IEnumerator CopyDirCoroutine(string sourceDirName, string destDirName, bool copySubDirs = true)
 		{
-			string originalScreenshotsDir = Path.Combine(Path.Combine(GetSavePath(), originalSlot), ScreenshotManager.screenshotsFolderName);
+			DirectoryInfo dir = new DirectoryInfo(sourceDirName);
 
-			if (Directory.Exists(originalScreenshotsDir))
+			if (!dir.Exists)
 			{
-				string newScreenshotsDir = originalScreenshotsDir.Replace(originalSlot, targetSlot);
+				throw new DirectoryNotFoundException(
+					"Source directory does not exist or could not be found: "
+					+ sourceDirName);
+			}
 
-				// .CreateDirectory harmlessly terminates if the target already exists
-				Directory.CreateDirectory(newScreenshotsDir);
+			// Get the subdirectories for the specified directory.
+			DirectoryInfo[] dirs = dir.GetDirectories();
+			yield return null;
+			
+			// If the destination directory doesn't exist, create it.       
+			Directory.CreateDirectory(destDirName);        
 
-				string[] filesToCopy = Directory.GetFiles(originalScreenshotsDir, "*", SearchOption.TopDirectoryOnly);
+			// Get the files in the directory and copy them to the new location.
+			FileInfo[] files = dir.GetFiles();
+			yield return null;
 
-				// Copy all the files & replace any files with the same name
-				foreach (string screenshot in filesToCopy)
+			foreach (FileInfo file in files)
+			{
+				string temppath = Path.Combine(destDirName, file.Name);
+				file.CopyTo(temppath, false);
+
+				yield return null;
+			}
+
+			// If copying subdirectories, copy them and their contents to new location.
+			if (copySubDirs)
+			{
+				foreach (DirectoryInfo subdir in dirs)
 				{
-					File.Copy(screenshot, screenshot.Replace(originalSlot, targetSlot), true);
+					string temppath = Path.Combine(destDirName, subdir.Name);
+					yield return CopyDirCoroutine(subdir.FullName, temppath, copySubDirs);
 				}
 			}
+
+			yield break;
+		}
+
+		private IEnumerator DelDirCoroutine(string dirPath)
+		{
+			DirectoryInfo dir = new DirectoryInfo(dirPath);
+
+			if (!dir.Exists)
+			{
+				yield break;
+			}
+
+			// Get subdirs in the directory.
+			DirectoryInfo[] dirs = dir.GetDirectories();
+			yield return null;
+			
+			// Delete files in the directory.
+			FileInfo[] files = dir.GetFiles();
+			yield return null;
+
+			foreach (FileInfo file in files)
+			{
+				file.Delete();
+
+				yield return null;
+			}
+
+			// Delete subdirs in the directory.
+			foreach (DirectoryInfo subdir in dirs)
+			{
+				yield return DelDirCoroutine(subdir.FullName);
+			}
+
+			// Delete the directory itself
+			dir.Delete();
+			
+			yield break;
+		}
+
+		private IEnumerator RotateAutosaveSlots(string slot)
+		{
+			// get the current slots
+			List<AutosaveSlot> slots = GetAutosaveSlotsOldestFirst(slot);
+			
+			// break if theres nothing to do
+			if(slots.Count == 0)
+			{
+				Entry.LogInfo(string.Format(
+					"Found no autosave slots for {0}, nothing to rotate",
+					slot,
+					string.Format(AutosaveSlot.Format, 0)));
+
+				yield break;
+			}
+
+			Entry.LogDebug(string.Format(
+					"Oldest slot: {0}",
+					slots.First().ToString()),
+				true);
+
+			Entry.LogDebug(string.Format(
+					"Most recent slot: {0}",
+					slots.Last().ToString()),
+				true);
+
+			// check if we've reached the maximum number of saves, remove oldest save
+			if(slots.Count >= Entry.GetConfig.MaxSaveFiles)
+			{
+				Entry.LogInfo(string.Format(
+					"Reached maximum number of autosave slots ({0}) for {1}, removing the oldest {2}",
+					Entry.GetConfig.MaxSaveFiles,
+					slot,
+					string.Format(
+						AutosaveSlot.Format,
+						slots.First().GetId())));
+
+				yield return CoroutineHost.StartCoroutine(this.DelDirCoroutine(
+					slots.First().GetDirectoryInfo().FullName));
+			}
+
+			// handle max ids for the next slot by restarting at 0
+			AutosaveSlot nextSlot = GetNextAutosaveSlot(slot);
+			yield return null;
+			if(nextSlot.GetId() > AutosaveSlot.MaxID)
+			{
+				// if there's already a 0 slot, remove it
+				nextSlot = new AutosaveSlot(slot, 0);
+				if(nextSlot.GetDirectoryInfo().Exists)
+				{
+					yield return CoroutineHost.StartCoroutine(this.DelDirCoroutine(
+						nextSlot.GetDirectoryInfo().FullName));
+				}
+				
+				// move our latest save to id 0
+				slots.Last().GetDirectoryInfo().MoveTo(nextSlot.GetDirectoryInfo().FullName);
+			}
+
+			yield break;
+		}
+
+		private bool IsAutosaveSlot(string slot)
+		{
+			return (autosaveSlotRegex.Matches(slot).Count == 1);
 		}
 
 		// Modified IngameMenu.SaveGameAsync
+		internal bool ChangeSlotIfOnAutosaveSlot()
+        {
+
+            string slot = SaveLoadManager.main.GetCurrentSlot();
+			if(IsAutosaveSlot(slot))
+			{
+				// find all original game slots
+				List<string> slots = new List<string>();
+				foreach(string name in SaveLoadManager.main.GetPossibleSlotNames())
+				{
+					if(saveSlotRegex.Matches(name).Count == 1)
+					{
+						slots.Add(name);
+					}
+				}
+				
+				// up the id from the last one to get a new id
+				int slotId = 0;
+				if(slots.Count > 0)
+				{
+					slots.Sort();
+					
+					if(int.TryParse(slots.Last().SubstringFromOccuranceOf("slot", 0), out slotId))
+					{
+						slotId++;
+					}
+				}
+
+				// tell the game we want a new slot
+				SaveLoadManager.main.SetCurrentSlot(string.Format(
+					"slot{0:0000}",
+					slotId));
+
+				return true;
+			}
+
+			return true;
+        }
+
 		private IEnumerator AutosaveCoroutine()
 		{
 			this.isSaving = true;
 			bool hardcoreMode = Entry.GetConfig.HardcoreMode;
+
+			// ensure we do not autosave our own slots when a player loaded them,
+			// just give them a new primary slot
+			ChangeSlotIfOnAutosaveSlot();
 
 #if DEBUG
 			// Close ingame menu if open, used for testing
@@ -176,15 +370,16 @@ namespace Autosave
 #endif
 
 			Entry.DisplayMessage("AutosaveStarting".Translate());
-			string cachedSaveSlot = string.Empty;
+			string currentSaveSlotPath = string.Empty;
+			string saveGamesPath = GetSavePath();
 
 			if(!hardcoreMode)
 			{
-				if(!Directory.Exists(GetSavePath()))
+				if(!Directory.Exists(saveGamesPath))
 				{
 					Entry.LogFatal(string.Format(
 						"Unable to find save directory, the expected '{0}' does not exist.",
-						cachedSaveSlot));
+						saveGamesPath));
 					Entry.DisplayMessage("Could not find your SavedGames directory, see log for details!", // TODO: Translate
 						Level.Fatal);
 
@@ -192,39 +387,38 @@ namespace Autosave
 					throw new FileNotFoundException(savePath);
 				}
 
-				cachedSaveSlot = Path.Combine(GetSavePath(), SaveLoadManager.main.GetCurrentSlot());
+				currentSaveSlotPath = Path.Combine(saveGamesPath, SaveLoadManager.main.GetCurrentSlot());
 			}
-
-
-			Entry.LogDebug($"Cached save slot == {cachedSaveSlot}", true);
 
 			yield return null;
 
-			string autosaveSlot = !hardcoreMode ? this.NextAutosaveSlotName() : string.Empty;
-
-			if (!hardcoreMode)
-			{
-				SaveLoadManager.main.SetCurrentSlot(autosaveSlot);
-			}
-
-			Entry.LogDebug($"Set custom slot as {autosaveSlot}", true);
-
-			yield return null;
-
-			IEnumerator saveGameAsync = (IEnumerator)typeof(IngameMenu).GetMethod("SaveGameAsync", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(IngameMenu.main, null);
+			// trigger original save
+			IEnumerator saveGameAsync = (IEnumerator)typeof(IngameMenu).GetMethod(
+				"SaveGameAsync", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(IngameMenu.main, null);
 
 			yield return saveGameAsync;
 
 			Entry.LogDebug("Executed _SaveGameAsync");
 
-			if (!hardcoreMode)
+			if(!hardcoreMode)
 			{
-				this.CopyScreenshotFiles(cachedSaveSlot, autosaveSlot);
+				// rotate our current autosave slots
+				string slot = SaveLoadManager.main.GetCurrentSlot();
+				yield return CoroutineHost.StartCoroutine(this.RotateAutosaveSlots(slot));
+				
+				// figure out the next slot
+				AutosaveSlot nextAutosaveSlot = GetNextAutosaveSlot(slot);
+				string nextAutosavePath = nextAutosaveSlot.GetDirectoryInfo().FullName;
 
-				Entry.LogDebug($"Copied screenshots from {cachedSaveSlot} to {autosaveSlot}", true);
+				// make a copy of the current slot
+				yield return CoroutineHost.StartCoroutine(this.CopyDirCoroutine(
+					currentSaveSlotPath, nextAutosavePath));
 
-				SaveLoadManager.main.SetCurrentSlot(cachedSaveSlot);
-				this.lastUsedAutosaveName = autosaveSlot;
+				Entry.LogDebug(string.Format(
+						"Copied from '{0}' to '{1}'",
+						currentSaveSlotPath,
+						nextAutosavePath),
+					true);
 			}
 
 			int autosaveInterval = Entry.GetConfig.SecondsBetweenAutosaves;
@@ -285,17 +479,9 @@ namespace Autosave
 
 			this.nextSaveTriggerTick = Entry.GetConfig.SecondsBetweenAutosaves;
 
-			for (int i = 0; i < Entry.GetConfig.MaxSaveFiles; i++)
-			{
-				this.allowedAutosaveNames.Add(this.SlotNameFormatted(i));
-			}
-
-			this.lastUsedAutosaveName = !Entry.GetConfig.HardcoreMode ? this.LastUsedAutosaveFromStorage() : string.Empty;
-
 			Entry.LogDebug($"SecondsBetweenAutosaves == {Entry.GetConfig.SecondsBetweenAutosaves}");
 			Entry.LogDebug($"MaxSaveFiles == {Entry.GetConfig.MaxSaveFiles}");
 			Entry.LogDebug($"SafePlayerHealthFraction == {Entry.GetConfig.MinimumPlayerHealthPercent}");
-			Entry.LogDebug($"lastUsedAutosaveName == {this.lastUsedAutosaveName}");
 			Entry.LogDebug($"HardcoreMode == {Entry.GetConfig.HardcoreMode}");
 
 		}
