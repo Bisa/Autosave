@@ -33,9 +33,9 @@ namespace Autosave
 			Translation.ReloadLanguage();
 		}
 
-		private static bool Patch_SaveGame_Prefix()
+		private static void Patch_SaveGame_Prefix()
         {
-            return Player.main.GetComponent<AutosaveController>().ChangeSlotIfOnAutosaveSlot();
+            Player.main.GetComponent<AutosaveController>().ChangeSlotIfOnAutosaveSlot();
         }
 
 		public static bool Initialize()

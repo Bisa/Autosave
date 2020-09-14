@@ -89,8 +89,7 @@ namespace Autosave
 				{
 					// collect ids used for all autosaves to this slot
 					foreach (DirectoryInfo dir in
-						slotDirectories.OrderByDescending(d => d.GetFiles("gameinfo.json")[0].LastWriteTime))
-						//slotDirectories.OrderByDescending(d => d.Name))
+						slotDirectories.OrderBy(d => d.GetFiles("gameinfo.json")[0].LastWriteTime))
 					{
 						string autoSaveIdStr = dir.Name.SubstringFromOccuranceOf(AutosaveSlot.Delimiter, 0);
 						int autoSaveId = -1;
@@ -110,7 +109,6 @@ namespace Autosave
 				}
 			}
 
-			slots.Reverse();
 			return slots;
 		}
 
@@ -316,8 +314,14 @@ namespace Autosave
 		}
 
 		// Modified IngameMenu.SaveGameAsync
-		internal bool ChangeSlotIfOnAutosaveSlot()
+		internal void ChangeSlotIfOnAutosaveSlot()
         {
+
+			if(IsPlayingPermaDeath())
+			{
+				Entry.LogDebug("We won't be changing any slots while playing perma death.", true);
+				return;
+			}
 
             string slot = SaveLoadManager.main.GetCurrentSlot();
 			if(IsAutosaveSlot(slot))
@@ -348,18 +352,18 @@ namespace Autosave
 				SaveLoadManager.main.SetCurrentSlot(string.Format(
 					"slot{0:0000}",
 					slotId));
-
-				return true;
 			}
-
-			return true;
         }
+
+		private static bool IsPlayingPermaDeath()
+		{
+		    return GameModeUtils.IsPermadeath();
+		}
 
 		private IEnumerator AutosaveCoroutine()
 		{
 			this.isSaving = true;
-			bool hardcoreMode = Entry.GetConfig.HardcoreMode;
-
+			
 			// ensure we do not autosave our own slots when a player loaded them,
 			// just give them a new primary slot
 			ChangeSlotIfOnAutosaveSlot();
@@ -370,11 +374,27 @@ namespace Autosave
 #endif
 
 			Entry.DisplayMessage("AutosaveStarting".Translate());
-			string currentSaveSlotPath = string.Empty;
-			string saveGamesPath = GetSavePath();
+			
+			yield return null;
 
-			if(!hardcoreMode)
+			// trigger original save
+			IEnumerator saveGameAsync = (IEnumerator)typeof(IngameMenu).GetMethod(
+				"SaveGameAsync", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(IngameMenu.main, null);
+
+			yield return saveGameAsync;
+
+			Entry.LogDebug("Executed _SaveGameAsync");
+
+			if(IsPlayingPermaDeath())
 			{
+				Entry.LogDebug("Playing with permanent death, won't create any new save slots.", true);
+			}
+			
+			else
+			{
+				string currentSaveSlotPath = string.Empty;
+				string saveGamesPath = GetSavePath();
+
 				if(!Directory.Exists(saveGamesPath))
 				{
 					Entry.LogFatal(string.Format(
@@ -388,20 +408,6 @@ namespace Autosave
 				}
 
 				currentSaveSlotPath = Path.Combine(saveGamesPath, SaveLoadManager.main.GetCurrentSlot());
-			}
-
-			yield return null;
-
-			// trigger original save
-			IEnumerator saveGameAsync = (IEnumerator)typeof(IngameMenu).GetMethod(
-				"SaveGameAsync", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(IngameMenu.main, null);
-
-			yield return saveGameAsync;
-
-			Entry.LogDebug("Executed _SaveGameAsync");
-
-			if(!hardcoreMode)
-			{
 				// rotate our current autosave slots
 				string slot = SaveLoadManager.main.GetCurrentSlot();
 				yield return CoroutineHost.StartCoroutine(this.RotateAutosaveSlots(slot));
@@ -424,7 +430,7 @@ namespace Autosave
 			int autosaveInterval = Entry.GetConfig.SecondsBetweenAutosaves;
 			this.nextSaveTriggerTick += autosaveInterval;
 
-			Entry.LogDebug("Updated save slot and trigger tick");
+			Entry.LogDebug("Updated trigger tick");
 
 			yield return null;
 
@@ -482,8 +488,7 @@ namespace Autosave
 			Entry.LogDebug($"SecondsBetweenAutosaves == {Entry.GetConfig.SecondsBetweenAutosaves}");
 			Entry.LogDebug($"MaxSaveFiles == {Entry.GetConfig.MaxSaveFiles}");
 			Entry.LogDebug($"SafePlayerHealthFraction == {Entry.GetConfig.MinimumPlayerHealthPercent}");
-			Entry.LogDebug($"HardcoreMode == {Entry.GetConfig.HardcoreMode}");
-
+			Entry.LogDebug($"AutoSavePermaDeath == {Entry.GetConfig.AutoSavePermaDeath}");
 		}
 
 		// Monobehaviour.Start

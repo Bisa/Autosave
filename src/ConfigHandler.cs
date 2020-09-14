@@ -39,9 +39,9 @@ namespace Autosave
 				return false;
 			}
 
-			if (cfg.HardcoreMode.GetType() != typeof(bool))
+			if (cfg.AutoSavePermaDeath.GetType() != typeof(bool))
 			{
-				Entry.LogWarning("Please use only true or false for HardcoreMode. Config invalidated.");
+				Entry.LogWarning("Please use only true or false for AutoSavePermaDeath. Config invalidated.");
 
 				return false;
 			}

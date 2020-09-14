@@ -11,6 +11,6 @@ namespace Autosave
 
 		public float MinimumPlayerHealthPercent = 25;
 
-		public bool HardcoreMode = false;
+		public bool AutoSavePermaDeath = false;
 	}
 }

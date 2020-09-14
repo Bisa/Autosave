@@ -4,9 +4,9 @@ This is the missing autosave feature for Subnautica.
 
 This mod will:
 - Automatically save your game every N seconds
-- Keep at most X of these autosaves for you to return to whenever you want
+- Keep at most X of these autosaves for you to return to whenever you want (does not apply to games where perma death is active, see options!)
 
-Never loose more than N * X seconds worth of gameplay due to bugs, glitches or mistakes again!
+Never loose more than N (* X) seconds worth of gameplay due to bugs, glitches or mistakes again!
 
 ## Installation
 1) Make sure [QMods](https://www.nexusmods.com/subnautica/mods/201) (v4.x) is installed.
@@ -19,11 +19,11 @@ Never loose more than N * X seconds worth of gameplay due to bugs, glitches or m
    
    **"SecondsBetweenAutosaves": 900** - The time (in seconds) between autosave attempts. Must be at least 120.
    
-   **"MaxSaveFiles": 3** - The maximum amount of autosave slots. Must be at least 1.
+   **"MaxSaveFiles": 3** - The maximum amount of autosave slots. Must be at least 1. (This has no effect if perma death is active in your game).
    
    **"MinimumPlayerHealthPercent": 25** - If player health is below this percent, no save will occur. Change to 0 to disable this option.
-   
-   **"HardcoreMode": false** - If true, autosaves will override the normal save slot instead of using separate slots.
+
+   **"AutoSavePermaDeath": true** - If true, autosaving will be scheduled on perma death games - but only one save slot is used.
 
 ## Contributing
 
