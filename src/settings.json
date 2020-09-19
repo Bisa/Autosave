@@ -1,6 +1,6 @@
 {
-  "SecondsBetweenAutosaves": 20,
+  "SecondsBetweenAutosaves": 900,
   "MaxSaveFiles": 3,
   "MinimumPlayerHealthPercent": 25,
-  "AutoSavePermaDeath": false
+  "AutoSavePermaDeath": true
 }
