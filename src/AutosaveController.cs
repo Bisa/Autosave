@@ -362,7 +362,19 @@ namespace Autosave
 
 		private IEnumerator AutosaveCoroutine()
 		{
+
 			this.isSaving = true;
+
+			if(IsPlayingPermaDeath() && !Entry.Config.AutoSavePermaDeath)
+			{
+				Entry.LogDebug("Will not autosave a game with permanent death."); // TODO: Translate
+				
+				UpdateTick();
+				
+				yield break;
+			}
+
+			Entry.DisplayMessage("AutosaveStarting".Translate());
 			
 			// ensure we do not autosave our own slots when a player loaded them,
 			// just give them a new primary slot
@@ -373,8 +385,6 @@ namespace Autosave
 			IngameMenu.main.Close();
 #endif
 
-			Entry.DisplayMessage("AutosaveStarting".Translate());
-			
 			yield return null;
 
 			// trigger original save
@@ -427,19 +437,17 @@ namespace Autosave
 					true);
 			}
 
-			int autosaveInterval = (Entry.Config.MinutesBetweenAutosaves * 60);
-			this.nextSaveTriggerTick += autosaveInterval;
-
-			Entry.LogDebug("Updated trigger tick");
-
-			yield return null;
-
-			Entry.LogDebug("Autosave sequence complete");
-			Entry.DisplayMessage("AutosaveEnding".FormatTranslate(autosaveInterval.ToString()));
-
-			this.isSaving = false;
+			UpdateTick();
+			
+			Entry.DisplayMessage("AutosaveEnding".FormatTranslate((Entry.Config.MinutesBetweenAutosaves * 60).ToString()));
 
 			yield break;
+		}
+
+		private void UpdateTick()
+		{
+			this.nextSaveTriggerTick += (Entry.Config.MinutesBetweenAutosaves * 60);
+			this.isSaving = false;
 		}
 
 		private void Tick()
@@ -453,7 +461,10 @@ namespace Autosave
 
 			if (this.totalTicks == this.nextSaveTriggerTick - PriorWarningTicks)
 			{
-				Entry.LogDebug("Warning ticks reached, should display an ErrorMessage.");
+				if(IsPlayingPermaDeath() && !Entry.Config.AutoSavePermaDeath)
+				{
+					Entry.LogDebug($"Will not announce the next autosave. AutosavePermaDeath == {Entry.Config.AutoSavePermaDeath}", true);
+				}
 				Entry.DisplayMessage("AutosaveWarning".FormatTranslate(PriorWarningTicks.ToString()));
 			}
 

@@ -51,14 +51,24 @@ namespace Autosave
 			LogMessage(message, Level.Debug, null, showOnScreen);
 		}
 
-		internal static void DisplayMenuMessage(string message, Level level = Level.Info)
+		internal static void DisplayMenuInfo(string message)
+		{
+			DisplayMenuMessage(message, Level.Info, "green");
+		}
+
+		internal static void DisplayMenuWarn(string message)
+		{
+			DisplayMenuMessage(message, Level.Warn, "orange");
+		}
+
+		internal static void DisplayMenuMessage(string message, Level level = Level.Info, string color = "red")
 		{
 			LogInfo("Displaying message on main menu:");
 			message = string.Format(
 					"{0} {1}",
 					(level == Level.Info) ? string.Empty : level.ToString() + ": ",
 					message);
-			QModServices.Main.AddCriticalMessage(message, 25, "red", true);
+			QModServices.Main.AddCriticalMessage(message, 25, color, true);
 		}
 
 		internal static void DisplayMessage(string message, Level level = Level.Info)
@@ -105,6 +115,11 @@ namespace Autosave
 
 			Config.ValidateAndFix(Config);
 			Config.Save();
+
+			if(!Config.AutoSavePermaDeath)
+			{
+				DisplayMenuWarn("Will not save games with permanent death, toggle this in the options menu.");
+			}
 		}
 
 		[QModPatch]

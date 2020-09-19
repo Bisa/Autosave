@@ -130,7 +130,7 @@ namespace Autosave
 
 			if(fixedSomething)
 			{
-				Entry.DisplayMenuMessage("Fixed invalid config value(s), see log for details.", Level.Warn);
+				Entry.DisplayMenuWarn("Fixed invalid config value(s), see log for details.");
 			}
 		}
 
@@ -164,7 +164,7 @@ namespace Autosave
 			FileInfo legacyfile = new FileInfo(legacy.JsonFilePath);
 			legacyfile.MoveTo(legacyfile.FullName + ".legacy");
 
-			Entry.DisplayMenuMessage("Converted legacy settings.json to config.json"); // TODO: Translate
+			Entry.DisplayMenuInfo("Converted legacy settings.json to config.json"); // TODO: Translate
         }
     }
 }
