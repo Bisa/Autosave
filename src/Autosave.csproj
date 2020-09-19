@@ -87,6 +87,9 @@
     <Compile Include="*.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="patches\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Languages\**\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

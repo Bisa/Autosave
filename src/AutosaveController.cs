@@ -499,6 +499,8 @@ namespace Autosave
 
 		public void DelayAutosave()
 		{
+			Entry.LogDebug("Delaying autosave...", true);
+			
 			this.nextSaveTriggerTick += RetryTicks;
 		}
 

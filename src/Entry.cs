@@ -1,4 +1,5 @@
-﻿using QModManager.API.ModLoading;
+﻿using HarmonyLib;
+using QModManager.API.ModLoading;
 using QModManager.Utility;
 using System;
 using System.IO;
@@ -81,13 +82,14 @@ namespace Autosave
 		{
 			ConfigHandler.LoadConfig();
 
-			if(!AutosavePatches.Initialize())
-			{
-				LogFatal("Unable to initialize Harmony!");
-				DisplayMessage("Could not start, see log for details!", Level.Fatal); // TODO: Translate
-			}
-			
-			AutosavePatches.PatchAll();
+			var harmony = new Harmony("io.github.bisa.autosave");
+			#if DEBUG
+			harmony.PatchAll(typeof(DebuggingPatches));
+			#endif
+			harmony.PatchAll(typeof(PlayerPatches));
+			harmony.PatchAll(typeof(IngameMenuPatches));
+			harmony.PatchAll(typeof(SubRootPatches));
+			harmony.PatchAll(typeof(LanguagePatches));
 		}
 	}
 }
