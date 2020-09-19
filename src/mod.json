@@ -5,5 +5,8 @@
   "Version": "TOKEN_VERSION",
   "Enable": true,
   "Game": "TOKEN_GAME",
-  "AssemblyName": "TOKEN_ASSEMBLY"
+  "AssemblyName": "TOKEN_ASSEMBLY",
+  "VersionDependencies": {
+    "SMLHelper": "2.9"
+  }
 }

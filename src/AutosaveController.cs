@@ -155,7 +155,7 @@ namespace Autosave
 				return false;
 			}
 
-			float safeHealthFraction = Entry.GetConfig.MinimumPlayerHealthPercent;
+			float safeHealthFraction = Entry.Config.MinimumPlayerHealthPercent;
 
 			if (safeHealthFraction > 0f && !this.IsSafePlayerHealth(safeHealthFraction))
 			{
@@ -274,11 +274,11 @@ namespace Autosave
 				true);
 
 			// check if we've reached the maximum number of saves, remove oldest save
-			if(slots.Count >= Entry.GetConfig.MaxSaveFiles)
+			if(slots.Count >= Entry.Config.MaxAutosaveSlots)
 			{
 				Entry.LogInfo(string.Format(
 					"Reached maximum number of autosave slots ({0}) for {1}, removing the oldest {2}",
-					Entry.GetConfig.MaxSaveFiles,
+					Entry.Config.MaxAutosaveSlots,
 					slot,
 					string.Format(
 						AutosaveSlot.Format,
@@ -427,7 +427,7 @@ namespace Autosave
 					true);
 			}
 
-			int autosaveInterval = Entry.GetConfig.SecondsBetweenAutosaves;
+			int autosaveInterval = (Entry.Config.MinutesBetweenAutosaves * 60);
 			this.nextSaveTriggerTick += autosaveInterval;
 
 			Entry.LogDebug("Updated trigger tick");
@@ -476,19 +476,10 @@ namespace Autosave
 		// Monobehaviour.Awake(), called before Start()
 		private void Awake()
 		{
-			if (Entry.GetConfig == null)
-			{
-				Entry.LogWarning("Main config missing. Trying to load config.");
+			this.nextSaveTriggerTick = (Entry.Config.MinutesBetweenAutosaves * 60);
 
-				ConfigHandler.LoadConfig();
-			}
-
-			this.nextSaveTriggerTick = Entry.GetConfig.SecondsBetweenAutosaves;
-
-			Entry.LogDebug($"SecondsBetweenAutosaves == {Entry.GetConfig.SecondsBetweenAutosaves}");
-			Entry.LogDebug($"MaxSaveFiles == {Entry.GetConfig.MaxSaveFiles}");
-			Entry.LogDebug($"SafePlayerHealthFraction == {Entry.GetConfig.MinimumPlayerHealthPercent}");
-			Entry.LogDebug($"AutoSavePermaDeath == {Entry.GetConfig.AutoSavePermaDeath}");
+			Entry.LogDebug("Configuration:", true);
+			Entry.LogDebug(Entry.Config.ToString(), true);
 		}
 
 		// Monobehaviour.Start

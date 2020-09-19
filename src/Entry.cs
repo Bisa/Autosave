@@ -1,6 +1,9 @@
 ﻿using HarmonyLib;
+using QModManager.API;
 using QModManager.API.ModLoading;
 using QModManager.Utility;
+using SMLHelper.V2.Handlers;
+using SMLHelper.V2.Json;
 using System;
 using System.IO;
 using System.Reflection;
@@ -11,7 +14,7 @@ namespace Autosave
 	[QModCore]
 	public static class Entry
 	{
-		internal static Config GetConfig = null;
+		internal static Config Config { get; } = OptionsPanelHandler.Main.RegisterModOptions<Config>();
 
 		internal static string GetAssemblyDirectory
 		{
@@ -48,6 +51,16 @@ namespace Autosave
 			LogMessage(message, Level.Debug, null, showOnScreen);
 		}
 
+		internal static void DisplayMenuMessage(string message, Level level = Level.Info)
+		{
+			LogInfo("Displaying message on main menu:");
+			message = string.Format(
+					"{0} {1}",
+					(level == Level.Info) ? string.Empty : level.ToString() + ": ",
+					message);
+			QModServices.Main.AddCriticalMessage(message, 25, "red", true);
+		}
+
 		internal static void DisplayMessage(string message, Level level = Level.Info)
 		{
 			LogInfo("Displaying message in-game:");
@@ -77,10 +90,27 @@ namespace Autosave
 			}
 		}
 
+		static void LoadConfig()
+		{
+			// Check for and handle legacy settings.json
+			if(File.Exists(Path.Combine(Entry.GetAssemblyDirectory, "settings.json")))
+			{
+				Config.MigrateAndLoadLegacySettings();
+			}
+
+			else
+			{
+				Config.Load();
+			}
+
+			Config.ValidateAndFix(Config);
+			Config.Save();
+		}
+
 		[QModPatch]
 		public static void Initialize()
 		{
-			ConfigHandler.LoadConfig();
+			LoadConfig();
 
 			var harmony = new Harmony("io.github.bisa.autosave");
 			#if DEBUG
