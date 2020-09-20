@@ -10,10 +10,16 @@ Never loose more than N (* X) seconds worth of gameplay due to bugs, glitches or
 
 ## Installation
 
-1) Make sure [QMods](https://www.nexusmods.com/subnautica/mods/201) ( >= v4.x) is installed.
-2) Make sure [SMLHelper](https://www.nexusmods.com/subnautica/mods/113) ( >= v2.9.x) is installed.
-3) Download the latest zip file from the [Files tab](https://www.nexusmods.com/subnautica/mods/561/?tab=files) at Nexus or [Releases](https://github.com/Bisa/Autosave/releases) from github.
-4) Unzip the contents of the zip to the game's main directory (where Subnautica.exe can be found)
+1. Handle dependencies
+   * Required:
+     * [QMods](https://www.nexusmods.com/subnautica/mods/201)
+     * [SMLHelper](https://www.nexusmods.com/subnautica/mods/113)
+   * Optional:
+     * [VersionChecker](https://www.nexusmods.com/subnautica/mods/467) (To get notified on new releases to this mod)
+
+1. Download the latest zip file from the [Files tab](https://www.nexusmods.com/subnautica/mods/561/?tab=files) at Nexus or [Releases](https://github.com/Bisa/Autosave/releases) from github.
+
+1. Unzip the contents of the zip to the game's main directory (where Subnautica.exe can be found)
 
 ### Configuration
 
@@ -54,6 +60,8 @@ If you want to build from source you may use the following variables:
 * **Tag** - This will be used to set the ```AssemblyVersion``` and *mod.json* version for QMods, it will default to the value of ```git describe --tags --abbrev=0``` being run within your working directory.
 
 * **InfoVersion** - This will be used to set the ```AssemblyInformationalVersion```, it will default to the value of ```git describe --long --tags --dirty``` being run within your working directory and the value of ```-$(Configuration)``` will always be appended.
+
+* **VersionCheckUrl** - If supplied, this will add a section to *mod.json* for use by [VersionChecker](https://www.nexusmods.com/subnautica/mods/467) to check the latest version of this mod.
 
 Example build command:
 

@@ -8,5 +8,5 @@
   "AssemblyName": "TOKEN_ASSEMBLY",
   "VersionDependencies": {
     "SMLHelper": "2.9"
-  }
+  }TOKEN_VCURL
 }

@@ -15,7 +15,7 @@
     <SubnauticaQModsPath Condition=" '$(SubnauticaQModsPath)' == '' ">$(SubnauticaPath)\QMods</SubnauticaQModsPath>
     <BuildPath>..\build</BuildPath>
     <OutputPath>$(BuildPath)\QMods\$(AssemblyName)</OutputPath>
-    
+
     <Dependencies>$(SubnauticaPath)\Subnautica_Data\Managed</Dependencies>
     <BepInExPath>$(SubnauticaPath)\BepInEx</BepInExPath>
     <AssemblyCSharpFpPath>$(Dependencies)\Assembly-CSharp-firstpass.dll</AssemblyCSharpFpPath>
@@ -183,6 +183,18 @@
     </PropertyGroup>
     <Copy SourceFiles="$(ModJson)"
           DestinationFiles="$(NewModJson)"/>
+    <PropertyGroup>
+      <VersionCheckUrl Condition=" '$(VersionCheckUrl)' != '' ">
+        <![CDATA[,
+  "VersionChecker": {
+    "LatestVersionURL": "$(VersionCheckUrl)"
+  }]]>
+      </VersionCheckUrl>
+    </PropertyGroup>
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_VCURL"
+      Replacement="$(VersionCheckUrl)" />
     <TokenReplace
       Path="$(NewModJson)"
       Token="TOKEN_ID"
