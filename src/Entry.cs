@@ -135,6 +135,7 @@ namespace Autosave
 			harmony.PatchAll(typeof(IngameMenuPatches));
 			harmony.PatchAll(typeof(SubRootPatches));
 			harmony.PatchAll(typeof(LanguagePatches));
+			harmony.PatchAll(typeof(MainMenuLoadPanelPatches));
 		}
 	}
 }

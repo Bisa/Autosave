@@ -82,6 +82,10 @@
       <HintPath>$(Dependencies)\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(Dependencies)\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutosaveController.cs" />
@@ -92,6 +96,7 @@
     <Compile Include="patches\DebuggingPatches.cs" />
     <Compile Include="patches\IngameMenuPatches.cs" />
     <Compile Include="patches\LanguagePatches.cs" />
+    <Compile Include="patches\MainMenuLoadPanelPatches.cs" />
     <Compile Include="patches\PlayerPAtches.cs" />
     <Compile Include="patches\SubRootPatches.cs" />
   </ItemGroup>

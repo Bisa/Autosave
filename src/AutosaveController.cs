@@ -308,7 +308,7 @@ namespace Autosave
 			yield break;
 		}
 
-		private bool IsAutosaveSlot(string slot)
+		internal static bool IsAutosaveSlot(string slot)
 		{
 			return (autosaveSlotRegex.Matches(slot).Count == 1);
 		}
