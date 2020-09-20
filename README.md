@@ -6,7 +6,7 @@ This mod will:
 - Automatically save your game every N seconds
 - Keep at most X of these autosaves for you to return to whenever you want (does not apply to games where perma death is active, see options!)
 
-Never loose more than N (* X) seconds worth of gameplay due to bugs, glitches or mistakes again!
+Never lose more than N (* X) seconds worth of gameplay due to bugs, glitches or mistakes again!
 
 ## Installation
 
