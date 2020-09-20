@@ -63,6 +63,8 @@ If you want to build from source you may use the following variables:
 
 * **VersionCheckUrl** - If supplied, this will add a section to *mod.json* for use by [VersionChecker](https://www.nexusmods.com/subnautica/mods/467) to check the latest version of this mod.
 
+* **NexusId** - If supplied, this will add a section to *mod.json* with your provided [Nexus](https://www.nexusmods.com/) Mod Id, used for example by [QMod SAM](https://www.nexusmods.com/subnautica/mods/262).
+
 Example build command:
 
 ```msbuild -p:Platform=AnyCPU -p:Configuration=Release -p:SubnauticaPath="D:\Games\Steam\steamapps\common\Subnautica" -t:Clean,Build```

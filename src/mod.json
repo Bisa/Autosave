@@ -1,12 +1,12 @@
 {
-  "Id": "TOKEN_ID",
-  "DisplayName": "TOKEN_NAME",
-  "Author": "TOKEN_AUTHOR",
-  "Version": "TOKEN_VERSION",
+  "Id": "{TOKEN_ID}",
+  "DisplayName": "{TOKEN_NAME}",
+  "Author": "{TOKEN_AUTHOR}",
+  "Version": "{TOKEN_VERSION}",
   "Enable": true,
-  "Game": "TOKEN_GAME",
-  "AssemblyName": "TOKEN_ASSEMBLY",
+  "Game": "{TOKEN_GAME}",
+  "AssemblyName": "{TOKEN_ASSEMBLY}",
   "VersionDependencies": {
     "SMLHelper": "2.9"
-  }TOKEN_VCURL
+  }{TOKEN_VCURL}{TOKEN_NEXUSID}
 }

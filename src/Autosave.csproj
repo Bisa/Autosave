@@ -190,7 +190,17 @@
     "LatestVersionURL": "$(VersionCheckUrl)"
   }]]>
       </VersionCheckUrl>
+      <NexusId Condition=" '$(NexusId)' != '' ">
+        <![CDATA[,
+  "NexusId": {
+    "Subnautica": "$(NexusId)"
+  }]]>
+      </NexusId>
     </PropertyGroup>
+    <TokenReplace
+      Path="$(NewModJson)"
+      Token="TOKEN_NEXUSID"
+      Replacement="$(NexusId)" />
     <TokenReplace
       Path="$(NewModJson)"
       Token="TOKEN_VCURL"
@@ -277,7 +287,7 @@
       <Code Type="Fragment" Language="cs">
         <![CDATA[
           string content = File.ReadAllText(Path);
-          content = content.Replace(Token, Replacement);
+          content = content.Replace("{" + Token + "}", Replacement);
           File.WriteAllText(Path, content);
         ]]>
       </Code>
